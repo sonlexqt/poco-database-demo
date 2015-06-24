@@ -3,13 +3,14 @@
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/SessionFactory.h>
-#include <vector>
+//#include <vector>
 #include <iostream>
 
+
+using namespace Poco::Data;
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 using Poco::Data::Statement;
-using namespace Poco::Data;
 using Poco::Data::MySQL::ConnectionException;
 using Poco::Data::MySQL::StatementException;
 
@@ -24,25 +25,22 @@ int main(int argc, char** argv)
     // register SQLite connector
     //Poco::Data::SQLite::Connector::registerConnector();
     
-    //TODO!
     Poco::Data::MySQL::Connector::registerConnector();
 
     // create a session
     //Session session("SQLite", "sample.db");
     Session session("MySQL", "host=127.0.0.1;port=3306;db=view_count_vng;user=view_count_user;password=secret;compress=true;auto-reconnect=true");
-    //std::string str = "host=127.0.0.1;port=3306;db=view_count_vng;user=view_count_user;password=secret;compress=true;auto-reconnect=true";
-    //Poco::Data::Session session(Poco::Data::SessionFactory::instance().create(Poco::Data::MySQL::Connector::KEY, str ));
 
     // drop sample table, if it exists
     session << "DROP TABLE IF EXISTS view_count_info", now;
 
     // (re)create table
-    session << "CREATE TABLE view_count_info (username VARCHAR(30), counter INTEGER(5))", now;
+    session << "CREATE TABLE view_count_info (username VARCHAR(30) NOT NULL, counter INTEGER(5) NOT NULL)", now;
 
     // insert some rows
     ViewCountInfo vcInfo = 
     {
-        "Son Le",
+        "SonLe",
         7
     };
 
@@ -50,14 +48,23 @@ int main(int argc, char** argv)
     insert << "INSERT INTO view_count_info VALUES(?, ?)",
         use(vcInfo.username),
         use(vcInfo.counter);
-
     insert.execute();
 
-    vcInfo.username    = "Lan Le";
-    vcInfo.counter = 13;
-
+    vcInfo.username    = "LanLe";
+    vcInfo.counter = 25;
     insert.execute();
 
+    Statement myUpdate(session);
+    std::string updateStmt = "UPDATE view_count_info SET counter = " 
+            + std::string("69") 
+            + " WHERE username = '" + vcInfo.username + "'";
+    myUpdate << updateStmt;
+    myUpdate.execute();
+    
+//    Statement myUpdate(session);
+//    myUpdate << "UPDATE view_count_info SET counter = 100 WHERE username = 'LanLe'";
+//    myUpdate.execute();      
+    
     // a simple query
     Statement select(session);
     select << "SELECT username, counter FROM view_count_info",
